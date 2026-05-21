@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart MedDispenser Pro 1.0 — Modelo Computacional</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0a0e1a;
+  --bg-panel: #0f1420;
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --accent-bright: #60a5fa;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --text: #f8fafc;
+  --text-dim: #94a3b8;
+  --text-faint: #64748b;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at top, #1a2340 0%, #0a0e1a 60%);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* ============ HEADER ============ */
+.hero {
+  text-align: center;
+  margin-bottom: 60px;
+  animation: fadeInDown 1s ease-out;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-bright);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.hero-badge .pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+  box-shadow: 0 0 12px var(--accent-bright);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.hero h1 {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: -2px;
+  background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+  line-height: 1.1;
+}
+
+.hero .subtitle {
+  font-size: 16px;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin: 0 auto;
+  font-weight: 400;
+}
+
+.hero .model-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 16px;
+  letter-spacing: 2px;
+}
+
+/* ============ LAYOUT PRINCIPAL ============ */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .main-layout { grid-template-columns: 1fr; }
+}
+
+/* ============ DEVICE 3D ============ */
+.device-stage {
+  position: relative;
+  height: 720px;
+  background: linear-gradient(180deg, rgba(15, 20, 32, 0.6) 0%, rgba(10, 14, 26, 0.9) 100%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  padding: 40px;
+  backdrop-filter: blur(10px);
+  perspective: 1200px;
+}
+
+.device-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.wall-surface {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.device-3d {
+  position: relative;
+  width: 460px;
+  height: 640px;
+  margin: 0 auto;
+  transform-style: preserve-3d;
+  transform: rotateY(-8deg) rotateX(2deg);
+  animation: deviceFloat 6s ease-in-out infinite;
+}
+
+@keyframes deviceFloat {
+  0%, 100% { transform: rotateY(-8deg) rotateX(2deg) translateY(0); }
+  50% { transform: rotateY(-8deg) rotateX(2deg) translateY(-8px); }
+}
+
+/* Sombra del dispositivo */
+.device-shadow {
+  position: absolute;
+  bottom: -30px;
+  left: 10%;
+  right: 10%;
+  height: 40px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
+  filter: blur(20px);
+  animation: shadowFloat 6s ease-in-out infinite;
+}
+
+@keyframes shadowFloat {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(0.92); opacity: 0.45; }
+}
+
+/* CANISTERS (frascos superiores) */
+.canisters-row {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 3;
+}
+
+.canister {
+  position: relative;
+  width: 68px;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.canister:hover {
+  transform: translateY(-4px);
+}
+
+.canister.active .canister-tube {
+  box-shadow: 0 0 30px var(--accent-glow), inset 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+.canister-cap {
+  width: 68px;
+  height: 14px;
+  background: linear-gradient(180deg, #60a5fa 0%, #2563eb 50%, #1e40af 100%);
+  border-radius: 6px 6px 2px 2px;
+  position: relative;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.canister-cap::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+}
+
+.canister-tube {
+  width: 64px;
+  height: 130px;
+  margin: 0 auto;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.1) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2px 2px 8px 8px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  box-shadow:
+    inset 3px 0 8px rgba(255, 255, 255, 0.1),
+    inset -3px 0 8px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: box-shadow 0.4s ease;
+}
+
+.canister-tube::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), transparent 60%);
+  filter: blur(1px);
+}
+
+.canister-label {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 2;
+  min-width: 40px;
+}
+
+.canister-label .num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.canister-label .slot {
+  font-size: 8px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 1px;
+  border-top: 0.5px solid #cbd5e1;
+  padding-top: 2px;
+  margin-top: 2px;
+}
+
+.pills-stack {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 1px;
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.pill-item {
+  width: 18px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 1px 1px rgba(0,0,0,0.2);
+  animation: pillSettle 0.3s ease-out;
+}
+
+@keyframes pillSettle {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Cuerpo principal del dispositivo */
+.device-body {
+  position: absolute;
+  top: 155px;
+  left: 0;
+  right: 0;
+  bottom: 80px;
+  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  overflow: hidden;
+}
+
+.device-body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+}
+
+/* Indicadores de número debajo de canisters */
+.indicator-row {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+}
+
+.indicator {
+  width: 68px;
+  text-align: center;
+}
+
+.indicator .dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #334155;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 3px;
+}
+
+.indicator .lbl {
+  font-size: 9px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.8px;
+}
+
+/* SECCIÓN INTERNA: PANTALLA + RUEDA */
+.internal-section {
+  position: absolute;
+  top: 60px;
+  left: 12px;
+  right: 12px;
+  bottom: 60px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(241,245,249,0.6) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+.internal-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, rgba(59, 130, 246, 0.05) 50%, transparent 60%);
+  pointer-events: none;
+  animation: scanline 4s linear infinite;
+}
+
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Pantalla LCD */
+.lcd-screen {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.lcd-lights {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lcd-light {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 4px currentColor;
+}
+
+.lcd-light.green { background: #10b981; color: #10b981; animation: blink 2s ease-in-out infinite; }
+.lcd-light.blue { background: #3b82f6; color: #3b82f6; animation: blink 2s ease-in-out infinite 0.5s; }
+.lcd-light.amber { background: #f59e0b; color: #f59e0b; }
+.lcd-light.red { background: #ef4444; color: #ef4444; opacity: 0.4; }
+.lcd-light.green2 { background: #10b981; color: #10b981; animation: blink 2s ease-in-out infinite 1s; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.lcd-display {
+  background: linear-gradient(180deg, #0f3a5f 0%, #0a2846 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #e0f2fe;
+  font-size: 9px;
+  line-height: 1.4;
+  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2), 0 0 15px rgba(59, 130, 246, 0.15);
+  margin-left: 14px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.lcd-display::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 255, 0.02) 2px,
+    rgba(0, 255, 255, 0.02) 3px
+  );
+  pointer-events: none;
+}
+
+.lcd-header {
+  background: linear-gradient(90deg, #10b981, #059669);
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+  text-align: center;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.lcd-header.dispensing {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.lcd-header.error {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.lcd-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0;
+  gap: 4px;
+}
+
+.lcd-lbl { color: #7dd3fc; font-size: 7.5px; }
+.lcd-val { color: #f0f9ff; font-size: 8px; font-weight: 500; text-align: right; }
+
+.lcd-btn-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-left: 14px;
+  margin-top: 4px;
+}
+
+.lcd-btn {
+  background: linear-gradient(180deg, #f1f5f9, #cbd5e1);
+  border: 1px solid #94a3b8;
+  border-radius: 50px;
+  padding: 3px 8px;
+  font-size: 7px;
+  font-weight: 600;
+  color: #334155;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+
+/* Rueda dispensadora */
+.wheel-section {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.wheel-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.wheel-svg {
+  width: 100%;
+  height: 100%;
+  transition: transform 1.3s cubic-bezier(0.45, 0.05, 0.15, 1);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+.wheel-arc {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: var(--accent);
+  animation: arcMove 2s ease-in-out infinite;
+}
+
+@keyframes arcMove {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.wheel-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 7px;
+  color: #475569;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Canal dispensador transparente */
+.channel {
+  position: absolute;
+  right: 15%;
+  top: 60%;
+  width: 40px;
+  height: 80px;
+  background: linear-gradient(180deg, rgba(200, 230, 255, 0.2), rgba(200, 230, 255, 0.4));
+  border: 1px solid rgba(100, 150, 200, 0.4);
+  border-radius: 0 0 20px 20px;
+  box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.2);
+}
+
+.channel.active {
+  box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.6), 0 0 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Bandeja de recogida */
+.tray-3d {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 50px;
+  background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 50%, #64748b 100%);
+  border-radius: 0 0 12px 12px;
+  box-shadow:
+    inset 0 4px 8px rgba(0,0,0,0.3),
+    0 4px 12px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0 12px;
+  flex-wrap: wrap;
+  overflow: hidden;
+}
+
+.tray-3d::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 8%;
+  right: 8%;
+  height: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4), transparent);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dispensed-pill {
+  width: 18px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 3px rgba(0,0,0,0.3);
+  animation: pillDrop 0.8s cubic-bezier(0.45, 0.03, 0.51, 0.95);
+}
+
+@keyframes pillDrop {
+  0% { transform: translateY(-120px) rotate(0); opacity: 0; }
+  60% { transform: translateY(5px) rotate(30deg); opacity: 1; }
+  80% { transform: translateY(-3px) rotate(20deg); }
+  100% { transform: translateY(0) rotate(0); opacity: 1; }
+}
+
+.tray-label-floating {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* Cable de alimentación */
+.power-cable {
+  position: absolute;
+  right: -30px;
+  bottom: 80px;
+  width: 40px;
+  height: 100px;
+  border-right: 3px solid #1e293b;
+  border-bottom: 3px solid #1e293b;
+  border-bottom-right-radius: 30px;
+  opacity: 0.6;
+}
+
+.power-cable::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -3px;
+  width: 10px;
+  height: 8px;
+  background: #1e293b;
+  border-radius: 2px;
+}
+
+/* ============ PANEL LATERAL DERECHO ============ */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.panel-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(10px);
+}
+
+.panel-card h3 {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-card h3::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* Paciente actual */
+.patient-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 12px;
+}
+
+.patient-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.patient-info .name { font-size: 15px; font-weight: 600; color: var(--text); }
+.patient-info .meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+/* Scenarios (casos de uso) */
+.scenarios-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.scenario-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text);
+  font-family: inherit;
+}
+
+.scenario-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+}
+
+.scenario-btn.running {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
+
+.scenario-btn .icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.scenario-btn .title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.scenario-btn .desc {
+  font-size: 10px;
+  color: var(--text-dim);
+  line-height: 1.3;
+}
+
+/* Controles rápidos */
+.quick-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.qbtn {
+  flex: 1;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qbtn:hover { background: var(--surface-hover); }
+.qbtn.primary { background: var(--accent); border-color: var(--accent); }
+.qbtn.primary:hover { background: var(--accent-bright); }
+.qbtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Stats de medicamentos */
+.meds-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.med-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.med-color {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
+}
+
+.med-color::after {
+  content: attr(data-num);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: rgba(0,0,0,0.6);
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.med-details { flex: 1; min-width: 0; }
+.med-name { font-size: 12px; font-weight: 600; color: var(--text); }
+.med-sub { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+.med-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.med-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+.med-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* ============ LOG / ACTIVITY ============ */
+.activity-log {
+  margin-top: 20px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.activity-log::-webkit-scrollbar { width: 4px; }
+.activity-log::-webkit-scrollbar-track { background: transparent; }
+.activity-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.log-entry {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.log-entry:last-child { border-bottom: none; }
+
+@keyframes slideIn {
+  from { transform: translateX(-10px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.log-time {
+  color: var(--text-faint);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.log-msg { color: var(--text-dim); flex: 1; }
+.log-msg.success { color: var(--success); }
+.log-msg.warning { color: var(--warning); }
+.log-msg.info { color: var(--accent-bright); }
+
+/* ============ SCENARIO NARRATIVE ============ */
+.scenario-narrative {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(200%);
+  background: rgba(15, 20, 32, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 20px 28px;
+  max-width: 600px;
+  width: calc(100% - 48px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.15);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.scenario-narrative.show {
+  transform: translateX(-50%) translateY(0);
+}
+
+.narrative-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.narrative-content { flex: 1; }
+.narrative-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.narrative-text {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.narrative-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), #8b5cf6);
+  border-radius: 0 0 16px 16px;
+  transition: width 0.3s linear;
+}
+
+/* ============ FLOW DIAGRAM ============ */
+.flow-section {
+  margin-top: 60px;
+  text-align: center;
+}
+
+.flow-section h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.flow-section .sub {
+  color: var(--text-dim);
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.flow-step {
+  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.flow-step:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+}
+
+.flow-num {
+  position: absolute;
+  top: -12px;
+  left: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.flow-step h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.flow-step p {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.flow-step .emoji {
+  font-size: 24px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wheelGlow {
+  0%, 100% { filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)); }
+  50% { filter: drop-shadow(0 4px 20px rgba(59, 130, 246, 0.6)); }
+}
+
+.wheel-svg.spinning { animation: wheelGlow 1.3s ease-in-out; }
+
+@keyframes alertFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.3); }
+}
+
+.canister.alert { animation: alertFlash 1s ease-in-out infinite; }
+
+/* Voice indicator */
+.voice-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.voice-indicator.show { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">
+      <span class="pulse"></span>
+      Modelo computacional interactivo
+    </div>
+    <h1>Smart MedDispenser Pro</h1>
+    <p class="subtitle">Solución tecnológica para que los adultos mayores gestionen su medicación de forma autónoma, segura y sin depender de terceros.</p>
+    <div class="model-tag">MODELO MD-4-SMART · V1.0</div>
+  </div>
+
+  <!-- LAYOUT PRINCIPAL -->
+  <div class="main-layout">
+
+    <!-- ESCENARIO 3D -->
+    <div class="device-stage">
+      <div class="wall-surface"></div>
+
+      <div class="device-3d">
+        <div class="device-shadow"></div>
+
+        <!-- CANISTERS SUPERIORES -->
+        <div class="canisters-row" id="canisters-row"></div>
+
+        <!-- CUERPO PRINCIPAL -->
+        <div class="device-body">
+          <div class="indicator-row" id="indicator-row"></div>
+
+          <div class="internal-section">
+            <!-- PANTALLA LCD -->
+            <div class="lcd-screen">
+              <div class="lcd-lights">
+                <div class="lcd-light green"></div>
+                <div class="lcd-light blue"></div>
+                <div class="lcd-light amber"></div>
+                <div class="lcd-light red"></div>
+                <div class="lcd-light green2"></div>
+              </div>
+              <div class="lcd-display" id="lcd-display"></div>
+              <div class="lcd-btn-row">
+                <button class="lcd-btn">⏻</button>
+                <button class="lcd-btn">◀</button>
+                <button class="lcd-btn">▶</button>
+                <button class="lcd-btn">●</button>
+              </div>
+            </div>
+
+            <!-- RUEDA DISPENSADORA -->
+            <div class="wheel-section">
+              <div class="wheel-wrap">
+                <svg class="wheel-svg" id="wheel-svg" viewBox="0 0 120 120">
+                  <defs>
+                    <radialGradient id="wheelGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#94a3b8"/>
+                      <stop offset="70%" stop-color="#64748b"/>
+                      <stop offset="100%" stop-color="#334155"/>
+                    </radialGradient>
+                    <radialGradient id="centerGrad" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#e2e8f0"/>
+                      <stop offset="100%" stop-color="#64748b"/>
+                    </radialGradient>
+                  </defs>
+                  <!-- Engranaje exterior -->
+                  <circle cx="60" cy="60" r="56" fill="url(#wheelGrad)" stroke="#1e293b" stroke-width="0.5"/>
+                  <!-- Dientes del engranaje -->
+                  <g id="gear-teeth"></g>
+                  <!-- Slots de medicamentos -->
+                  <g id="wheel-slots"></g>
+                  <!-- Centro -->
+                  <circle cx="60" cy="60" r="16" fill="url(#centerGrad)" stroke="#1e293b" stroke-width="0.5"/>
+                  <circle cx="60" cy="60" r="8" fill="#1e293b"/>
+                  <circle cx="60" cy="60" r="4" fill="#94a3b8"/>
+                  <!-- Marcas de rotación -->
+                  <line x1="60" y1="44" x2="60" y2="38" stroke="#f8fafc" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <div class="wheel-label">Rueda dispensadora ↻</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BANDEJA -->
+        <div class="tray-3d" id="tray-3d">
+          <div class="tray-label-floating">Bandeja de recogida</div>
+        </div>
+
+        <!-- CABLE -->
+        <div class="power-cable"></div>
+      </div>
+    </div>
+
+    <!-- PANEL LATERAL -->
+    <div class="side-panel">
+
+      <!-- PACIENTE -->
+      <div class="panel-card">
+        <h3>Paciente activo</h3>
+        <div class="patient-card">
+          <div class="patient-avatar">MG</div>
+          <div class="patient-info">
+            <div class="name">María García, 74 años</div>
+            <div class="meta">Hipertensión · Diabetes tipo 2</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CASOS DE USO -->
+      <div class="panel-card">
+        <h3>Casos de uso · simulación</h3>
+        <div class="scenarios-grid">
+          <button class="scenario-btn" onclick="runScenario('morning')" id="sc-morning">
+            <div class="icon" style="background:#fef3c7">☀️</div>
+            <div class="title">Rutina matinal</div>
+            <div class="desc">María toma su dosis de las 8:00 AM</div>
+          </button>
+          <button class="scenario-btn" onclick="runScenario('reminder')" id="sc-reminder">
+            <div class="icon" style="background:#dbeafe">🔔</div>
+            <div class="title">Alerta sonora</div>
+            <div class="desc">El dispositivo avisa la hora de tomar</div>
+          </button>
+          <button class="scenario-btn" onclick="runScenario('fullday')" id="sc-fullday">
+            <div class="icon" style="background:#dcfce7">📅</div>
+            <div class="title">Día completo</div>
+            <div class="desc">Las 4 tomas del día automáticas</div>
+          </button>
+          <button class="scenario-btn" onclick="runScenario('lowstock')" id="sc-lowstock">
+            <div class="icon" style="background:#fee2e2">⚠️</div>
+            <div class="title">Stock bajo</div>
+            <div class="desc">Aviso de recarga al cuidador</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTROLES -->
+      <div class="panel-card">
+        <h3>Control manual</h3>
+        <div class="quick-controls">
+          <button class="qbtn" onclick="manualSelect()">Siguiente</button>
+          <button class="qbtn primary" onclick="manualDispense()" id="btn-dispense">Dispensar</button>
+          <button class="qbtn" onclick="resetAll()">Reiniciar</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="panel-card">
+        <h3>Inventario de medicamentos</h3>
+        <div class="meds-stats" id="meds-stats"></div>
+      </div>
+
+      <!-- LOG -->
+      <div class="panel-card">
+        <h3>Registro de actividad</h3>
+        <div class="activity-log" id="activity-log"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DIAGRAMA DE FLUJO DE FUNCIONAMIENTO -->
+  <div class="flow-section">
+    <h2>¿Cómo funciona el dispositivo?</h2>
+    <p class="sub">Flujo completo paso a paso — desde la programación hasta la toma del medicamento</p>
+
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <span class="emoji">💊</span>
+        <h4>Carga inicial</h4>
+        <p>El cuidador o farmacéutico carga los 4 contenedores con los medicamentos prescritos al paciente.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <span class="emoji">⏰</span>
+        <h4>Programación</h4>
+        <p>Se configuran los horarios y posologías de cada medicamento (AM, mediodía, PM, suplemento).</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <span class="emoji">🔔</span>
+        <h4>Alerta al usuario</h4>
+        <p>Cuando llega la hora, el dispositivo emite sonido, luz y muestra instrucciones en pantalla.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <span class="emoji">⚙️</span>
+        <h4>Dispensación</h4>
+        <p>La rueda rota hacia el contenedor correcto y libera la dosis exacta en la bandeja inferior.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <span class="emoji">👵</span>
+        <h4>Toma segura</h4>
+        <p>El adulto mayor recoge su medicamento de la bandeja con las instrucciones visibles en pantalla.</p>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <span class="emoji">📱</span>
+        <h4>Seguimiento</h4>
+        <p>El sistema registra la toma y avisa al cuidador si falta una dosis o el stock está bajo.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NARRATIVE FLOATING -->
+<div class="scenario-narrative" id="narrative">
+  <div class="narrative-icon" id="narrative-icon">💊</div>
+  <div class="narrative-content">
+    <div class="narrative-title" id="narrative-title"></div>
+    <div class="narrative-text" id="narrative-text"></div>
+  </div>
+  <div class="narrative-progress" id="narrative-progress"></div>
+</div>
+
+<script>
+// ============== DATOS DE MEDICAMENTOS ==============
+const MEDS = [
+  { id: 1, slot: 'AM', name: 'Atenolol', dose: '50mg', color: '#ffffff', borderColor: '#cbd5e1', initial: 12, time: '08:00', instructions: 'Tomar con agua. No triturar.', method: 'Oral', disease: 'Hipertensión' },
+  { id: 2, slot: 'MD', name: 'Metformina', dose: '850mg', color: '#3b82f6', borderColor: '#1e40af', initial: 10, time: '12:00', instructions: 'Tomar con alimentos.', method: 'Oral con comida', disease: 'Diabetes' },
+  { id: 3, slot: 'PM', name: 'Losartán', dose: '100mg', color: '#eab308', borderColor: '#a16207', initial: 8, time: '18:00', instructions: 'Misma hora cada día.', method: 'Oral', disease: 'Hipertensión' },
+  { id: 4, slot: 'SUP', name: 'Vitamina D', dose: '1000UI', color: '#ef4444', borderColor: '#991b1b', initial: 15, time: '20:00', instructions: 'Tomar con comida grasa.', method: 'Oral suplemento', disease: 'Suplemento' }
+];
+
+let state = {
+  selected: null,
+  phase: 'idle',
+  wheelAngle: 0,
+  dispensed: { 1: 0, 2: 0, 3: 0, 4: 0 },
+  trayPills: [],
+  running: false,
+  logs: []
+};
+
+// ============== RENDER FUNCTIONS ==============
+function renderCanisters() {
+  const row = document.getElementById('canisters-row');
+  row.innerHTML = MEDS.map(m => {
+    const remaining = m.initial - state.dispensed[m.id];
+    const active = state.selected === m.id ? ' active' : '';
+    const alert = remaining <= 2 ? ' alert' : '';
+    const pills = [];
+    for (let i = 0; i < Math.min(remaining, 8); i++) {
+      pills.push(`<div class="pill-item" style="background:${m.color};border:1px solid ${m.borderColor}"></div>`);
+    }
+    return `<div class="canister${active}${alert}" onclick="selectCanister(${m.id})">
+      <div class="canister-cap"></div>
+      <div class="canister-tube">
+        <div class="canister-label">
+          <div class="num">${m.id}</div>
+          <div class="slot">${m.slot}</div>
+        </div>
+        <div class="pills-stack">${pills.join('')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const indicators = document.getElementById('indicator-row');
+  indicators.innerHTML = MEDS.map(m => `
+    <div class="indicator">
+      <div class="dot">${m.id}</div>
+      <div class="lbl">${m.slot}</div>
+    </div>
+  `).join('');
+}
+
+function renderLCD() {
+  const lcd = document.getElementById('lcd-display');
+  if (state.phase === 'idle') {
+    const next = MEDS[0];
+    lcd.innerHTML = `
+      <div class="lcd-header">SISTEMA LISTO</div>
+      <div class="lcd-row"><span class="lcd-lbl">Paciente:</span><span class="lcd-val">M. GARCÍA</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Estado:</span><span class="lcd-val">OPERATIVO</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Próx. dosis:</span><span class="lcd-val">${next.time}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Medicamento:</span><span class="lcd-val">${next.name}</span></div>
+    `;
+  } else if (state.phase === 'alerting') {
+    const m = MEDS.find(x => x.id === state.selected);
+    lcd.innerHTML = `
+      <div class="lcd-header dispensing">⚠ HORA DE TOMAR</div>
+      <div class="lcd-row"><span class="lcd-lbl">Medic.:</span><span class="lcd-val">${m.name}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Dosis:</span><span class="lcd-val">${m.dose}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Hora:</span><span class="lcd-val">${m.time}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Presione:</span><span class="lcd-val">DISPENSAR</span></div>
+    `;
+  } else if (state.phase === 'selected') {
+    const m = MEDS.find(x => x.id === state.selected);
+    const rem = m.initial - state.dispensed[m.id];
+    lcd.innerHTML = `
+      <div class="lcd-header">SELECCIONADO</div>
+      <div class="lcd-row"><span class="lcd-lbl">Contenedor:</span><span class="lcd-val">#${m.id} ${m.slot}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Medic.:</span><span class="lcd-val">${m.name}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Dosis:</span><span class="lcd-val">${m.dose}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Restantes:</span><span class="lcd-val">${rem} uds</span></div>
+    `;
+  } else if (state.phase === 'dispensing') {
+    const m = MEDS.find(x => x.id === state.selected);
+    lcd.innerHTML = `
+      <div class="lcd-header dispensing">DISPENSANDO...</div>
+      <div class="lcd-row"><span class="lcd-lbl">Medic.:</span><span class="lcd-val">${m.name}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Estado:</span><span class="lcd-val">Rueda en giro</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Progreso:</span><span class="lcd-val">●●●○○</span></div>
+    `;
+  } else if (state.phase === 'done') {
+    const m = MEDS.find(x => x.id === state.selected);
+    const idx = MEDS.findIndex(x => x.id === m.id);
+    const next = MEDS[(idx + 1) % 4];
+    lcd.innerHTML = `
+      <div class="lcd-header">✓ DISPENSADO</div>
+      <div class="lcd-row"><span class="lcd-lbl">Medic.:</span><span class="lcd-val">${m.name}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Dosis:</span><span class="lcd-val">1 × ${m.dose}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Instr.:</span><span class="lcd-val">${m.method}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Próx.:</span><span class="lcd-val">${next.time}</span></div>
+    `;
+  } else if (state.phase === 'lowstock') {
+    lcd.innerHTML = `
+      <div class="lcd-header error">⚠ STOCK BAJO</div>
+      <div class="lcd-row"><span class="lcd-lbl">Alerta:</span><span class="lcd-val">Recargar</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Aviso a:</span><span class="lcd-val">CUIDADOR</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">SMS:</span><span class="lcd-val">ENVIADO ✓</span></div>
+    `;
+  }
+}
+
+function renderWheel() {
+  const slots = document.getElementById('wheel-slots');
+  const teeth = document.getElementById('gear-teeth');
+  // Dientes del engranaje
+  let teethHtml = '';
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * 360;
+    teethHtml += `<rect x="59" y="2" width="2" height="4" fill="#475569" transform="rotate(${angle} 60 60)"/>`;
+  }
+  teeth.innerHTML = teethHtml;
+
+  // Slots con medicamentos (4 posiciones)
+  const positions = [
+    { angle: 0, x: 60, y: 28 },
+    { angle: 90, x: 92, y: 60 },
+    { angle: 180, x: 60, y: 92 },
+    { angle: 270, x: 28, y: 60 }
+  ];
+
+  slots.innerHTML = positions.map((p, i) => {
+    const m = MEDS[i];
+    const rem = m.initial - state.dispensed[m.id];
+    const hasContent = rem > 0;
+    return `
+      <g>
+        <circle cx="${p.x}" cy="${p.y}" r="8" fill="${hasContent ? m.color : 'rgba(148,163,184,0.2)'}" stroke="${m.borderColor}" stroke-width="0.8" opacity="${hasContent ? 0.95 : 0.3}"/>
+        <text x="${p.x}" y="${p.y + 2}" text-anchor="middle" font-size="6" font-weight="700" fill="${hasContent ? 'rgba(0,0,0,0.6)' : '#64748b'}" font-family="JetBrains Mono, monospace">${m.id}</text>
+      </g>
+    `;
+  }).join('');
+
+  document.getElementById('wheel-svg').style.transform = `rotate(${state.wheelAngle}deg)`;
+}
+
+function renderTray() {
+  const tray = document.getElementById('tray-3d');
+  const label = '<div class="tray-label-floating">Bandeja de recogida</div>';
+  tray.innerHTML = label + state.trayPills.map(p =>
+    `<div class="dispensed-pill" style="background:${p.color};border:1px solid ${p.borderColor}"></div>`
+  ).join('');
+}
+
+function renderStats() {
+  const el = document.getElementById('meds-stats');
+  el.innerHTML = MEDS.map(m => {
+    const rem = m.initial - state.dispensed[m.id];
+    const pct = (rem / m.initial) * 100;
+    const color = rem <= 2 ? '#ef4444' : rem <= 5 ? '#f59e0b' : '#10b981';
+    return `
+      <div class="med-stat">
+        <div class="med-color" style="background:${m.color};border:1px solid ${m.borderColor}" data-num="${m.id}"></div>
+        <div class="med-details">
+          <div class="med-name">${m.name} ${m.dose}</div>
+          <div class="med-sub">${m.slot} · ${m.time} · ${m.disease}</div>
+          <div class="med-bar"><div class="med-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+        </div>
+        <div class="med-count">${rem}/${m.initial}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addLog(msg, type = '') {
+  const now = new Date();
+  const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+  state.logs.unshift({ time, msg, type });
+  state.logs = state.logs.slice(0, 10);
+  const el = document.getElementById('activity-log');
+  el.innerHTML = state.logs.map(l =>
+    `<div class="log-entry"><span class="log-time">${l.time}</span><span class="log-msg ${l.type}">${l.msg}</span></div>`
+  ).join('');
+}
+
+function showNarrative(title, text, icon = '💊', duration = 3000) {
+  const n = document.getElementById('narrative');
+  document.getElementById('narrative-title').textContent = title;
+  document.getElementById('narrative-text').textContent = text;
+  document.getElementById('narrative-icon').textContent = icon;
+  document.getElementById('narrative-progress').style.width = '0%';
+  n.classList.add('show');
+
+  setTimeout(() => {
+    document.getElementById('narrative-progress').style.transition = `width ${duration}ms linear`;
+    document.getElementById('narrative-progress').style.width = '100%';
+  }, 50);
+
+  setTimeout(() => {
+    n.classList.remove('show');
+    setTimeout(() => {
+      document.getElementById('narrative-progress').style.transition = '';
+      document.getElementById('narrative-progress').style.width = '0%';
+    }, 500);
+  }, duration);
+}
+
+function render() {
+  renderCanisters();
+  renderLCD();
+  renderWheel();
+  renderTray();
+  renderStats();
+}
+
+// ============== INTERACCIÓN ==============
+function selectCanister(id) {
+  if (state.running) return;
+  const m = MEDS.find(x => x.id === id);
+  const rem = m.initial - state.dispensed[id];
+  if (rem <= 0) {
+    addLog(`Contenedor ${m.slot} vacío`, 'warning');
+    return;
+  }
+  state.selected = id;
+  state.phase = 'selected';
+  addLog(`Seleccionado: ${m.name} ${m.dose}`, 'info');
+  document.getElementById('btn-dispense').disabled = false;
+  render();
+}
+
+function manualSelect() {
+  if (state.running) return;
+  const available = MEDS.filter(m => (m.initial - state.dispensed[m.id]) > 0);
+  if (available.length === 0) return;
+  const cur = available.findIndex(m => m.id === state.selected);
+  const next = available[(cur + 1) % available.length];
+  selectCanister(next.id);
+}
+
+async function manualDispense() {
+  if (!state.selected || state.running) return;
+  await dispenseMed(state.selected);
+}
+
+function dispenseMed(id) {
+  return new Promise(resolve => {
+    const m = MEDS.find(x => x.id === id);
+    const rem = m.initial - state.dispensed[id];
+    if (rem <= 0) { resolve(); return; }
+
+    state.selected = id;
+    state.phase = 'dispensing';
+    addLog(`Dispensando ${m.name}...`, 'info');
+
+    // Calcular ángulo de rotación (cada slot son 90°)
+    const targetAngle = state.wheelAngle + 90 * m.id + 360;
+    state.wheelAngle = targetAngle;
+
+    document.getElementById('wheel-svg').classList.add('spinning');
+    render();
+
+    setTimeout(() => {
+      state.dispensed[id]++;
+      state.trayPills.push({ color: m.color, borderColor: m.borderColor });
+      if (state.trayPills.length > 8) state.trayPills.shift();
+      state.phase = 'done';
+
+      document.getElementById('wheel-svg').classList.remove('spinning');
+      addLog(`✓ ${m.name} dispensado correctamente`, 'success');
+      render();
+
+      setTimeout(() => {
+        if (!state.running) {
+          state.phase = 'idle';
+          state.selected = null;
+          document.getElementById('btn-dispense').disabled = true;
+          render();
+        }
+        resolve();
+      }, 2000);
+    }, 1400);
+  });
+}
+
+function resetAll() {
+  state = {
+    selected: null,
+    phase: 'idle',
+    wheelAngle: 0,
+    dispensed: { 1: 0, 2: 0, 3: 0, 4: 0 },
+    trayPills: [],
+    running: false,
+    logs: []
+  };
+  addLog('Sistema reiniciado', 'info');
+  document.getElementById('btn-dispense').disabled = true;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('running'));
+  render();
+}
+
+// ============== CASOS DE USO (ESCENARIOS) ==============
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function runScenario(name) {
+  if (state.running) return;
+  state.running = true;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('running'));
+  document.getElementById(`sc-${name}`).classList.add('running');
+
+  if (name === 'morning') {
+    showNarrative('Escenario 1 · Mañana', 'Son las 8:00 AM. El dispositivo alerta a María que es hora de tomar su medicamento para la tensión.', '☀️', 4000);
+    state.selected = 1;
+    state.phase = 'alerting';
+    addLog('🔔 Alerta: 08:00 AM — Atenolol', 'warning');
+    render();
+    await sleep(4000);
+
+    showNarrative('María se acerca al dispositivo', 'La pantalla le muestra las instrucciones con claridad y un sonido suave la guía.', '👵', 3000);
+    await sleep(3000);
+
+    showNarrative('Dispensación automática', 'La rueda rota hasta el contenedor correcto y libera una pastilla en la bandeja.', '⚙️', 3500);
+    await dispenseMed(1);
+    await sleep(1000);
+
+    showNarrative('María toma su medicamento', 'Con las instrucciones "Tomar con agua" visibles, María toma su dosis con seguridad.', '✅', 3500);
+    await sleep(3500);
+  }
+
+  else if (name === 'reminder') {
+    showNarrative('Escenario 2 · Alerta sonora', 'El dispositivo detecta que es hora de medicar. Luces parpadean y suena una alarma.', '🔔', 4000);
+    state.selected = 2;
+    state.phase = 'alerting';
+    addLog('🔊 Alarma activa · Metformina pendiente', 'warning');
+    // Parpadeo visual
+    for (let i = 0; i < 5; i++) {
+      document.querySelectorAll('.canister')[1].classList.toggle('active');
+      render();
+      await sleep(400);
+    }
+    document.querySelectorAll('.canister')[1].classList.add('active');
+    render();
+    await sleep(2000);
+
+    showNarrative('Notificación al cuidador', 'Si María no responde en 10 min, el sistema avisa por SMS al cuidador.', '📱', 3500);
+    addLog('📲 SMS enviado a cuidador', 'info');
+    await sleep(3500);
+  }
+
+  else if (name === 'fullday') {
+    showNarrative('Escenario 3 · Día completo', 'Simulación acelerada de las 4 tomas del día: mañana, mediodía, tarde y noche.', '📅', 3500);
+    await sleep(3500);
+
+    for (let i = 0; i < 4; i++) {
+      const m = MEDS[i];
+      showNarrative(`${m.time} · ${m.slot}`, `Tomando ${m.name} ${m.dose} — ${m.disease}`, ['☀️','🌤️','🌆','🌙'][i], 2500);
+      await dispenseMed(m.id);
+      await sleep(500);
+    }
+
+    showNarrative('Día completado ✓', 'Las 4 dosis del día fueron dispensadas correctamente. Todo registrado.', '🎉', 4000);
+    await sleep(4000);
+  }
+
+  else if (name === 'lowstock') {
+    showNarrative('Escenario 4 · Stock bajo', 'El Losartán está por agotarse. El sistema detecta que quedan pocas unidades.', '⚠️', 4000);
+    // Simular stock bajo
+    state.dispensed[3] = MEDS[2].initial - 2;
+    render();
+    await sleep(4000);
+
+    showNarrative('Aviso al cuidador', 'Se envía una notificación SMS automática al cuidador con los detalles.', '📩', 3500);
+    state.phase = 'lowstock';
+    addLog('⚠️ Stock bajo: Losartán (2 uds)', 'warning');
+    addLog('📨 Notificación SMS enviada', 'info');
+    render();
+    await sleep(3500);
+
+    showNarrative('Recarga programada', 'El cuidador recibe las indicaciones y programa la visita a la farmacia.', '💊', 3500);
+    await sleep(3500);
+  }
+
+  state.phase = 'idle';
+  state.selected = null;
+  state.running = false;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('running'));
+  render();
+}
+
+// ============== INICIALIZACIÓN ==============
+addLog('Sistema inicializado', 'success');
+addLog('Paciente cargado: M. García', 'info');
+addLog('4 contenedores listos', 'success');
+render();
+</script>
+
+</body>
+</html>
