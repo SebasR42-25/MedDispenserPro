@@ -613,7 +613,7 @@ body::before {
   bottom: 0;
   left: 10%;
   right: 10%;
-  height: 50px;
+  height: 65px;
   background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 50%, #64748b 100%);
   border-radius: 0 0 12px 12px;
   box-shadow:
@@ -622,10 +622,11 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 0 12px;
+  gap: 2px;
+  padding: 14px 10px 6px;
   flex-wrap: wrap;
   overflow: hidden;
+  position: relative;
 }
 
 .tray-3d::before {
@@ -1119,6 +1120,124 @@ body::before {
 }
 
 .voice-indicator.show { display: flex; }
+
+/* ============ HISTORY MODAL ============ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: #0f1420;
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 28px;
+  width: min(700px, calc(100vw - 48px));
+  max-height: 80vh;
+  display: flex; flex-direction: column; gap: 16px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 18px; font-weight: 700; color: var(--text); }
+.modal-close {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-dim);
+  padding: 6px 14px; cursor: pointer; font-size: 13px; font-family: inherit;
+  transition: all 0.2s;
+}
+.modal-close:hover { background: var(--surface-hover); color: var(--text); }
+.history-table { overflow-y: auto; flex: 1; }
+.history-table::-webkit-scrollbar { width: 4px; }
+.history-table::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.hist-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.hist-table th {
+  text-align: left; padding: 8px 12px;
+  color: var(--text-faint); font-size: 10px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; background: #0f1420;
+}
+.hist-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+.hist-table tr:last-child td { border-bottom: none; }
+.pill-dot {
+  display: inline-block; width: 10px; height: 5px;
+  border-radius: 50%; margin-right: 6px; vertical-align: middle;
+}
+.hist-empty { text-align: center; padding: 40px; color: var(--text-faint); font-size: 13px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+.btn-export {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-dim);
+  padding: 8px 16px; cursor: pointer; font-size: 12px; font-family: inherit;
+  transition: all 0.2s;
+}
+.btn-export:hover { background: var(--surface-hover); color: var(--text); }
+
+/* ============ ALARM OVERLAY ============ */
+.alarm-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.3s;
+}
+.alarm-overlay.show { pointer-events: all; opacity: 1; }
+.alarm-box {
+  background: linear-gradient(135deg, #1a0505, #2d0a0a);
+  border: 2px solid #ef4444;
+  border-radius: 20px;
+  padding: 36px 44px;
+  text-align: center;
+  box-shadow: 0 0 60px rgba(239,68,68,0.45), 0 20px 60px rgba(0,0,0,0.9);
+  animation: alarmPulseBox 0.6s ease-in-out infinite;
+  max-width: 420px;
+}
+@keyframes alarmPulseBox {
+  0%, 100% { box-shadow: 0 0 40px rgba(239,68,68,0.3), 0 20px 60px rgba(0,0,0,0.9); }
+  50% { box-shadow: 0 0 90px rgba(239,68,68,0.7), 0 20px 60px rgba(0,0,0,0.9); }
+}
+.alarm-icon { font-size: 52px; margin-bottom: 14px; }
+.alarm-title { font-size: 22px; font-weight: 800; color: #ef4444; margin-bottom: 8px; }
+.alarm-text { font-size: 14px; color: #fca5a5; margin-bottom: 24px; line-height: 1.6; }
+.alarm-dismiss {
+  background: #ef4444; border: none; border-radius: 10px;
+  color: white; font-size: 14px; font-weight: 700;
+  padding: 12px 32px; cursor: pointer; font-family: inherit;
+  transition: background 0.2s;
+}
+.alarm-dismiss:hover { background: #dc2626; }
+
+/* ============ TRAY COUNTER ============ */
+.tray-counter {
+  position: absolute; top: 3px; right: 8px;
+  font-size: 8px; font-family: 'JetBrains Mono', monospace;
+  color: rgba(255,255,255,0.75); font-weight: 700;
+  pointer-events: none;
+}
+.dispensed-pill-sm {
+  width: 11px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 2px rgba(0,0,0,0.35);
+  animation: pillDrop 0.8s cubic-bezier(0.45, 0.03, 0.51, 0.95);
+}
+
+/* Guardar historial btn row */
+.history-btn-row { margin-top: 8px; }
+.qbtn.history {
+  width: 100%; background: rgba(139,92,246,0.15);
+  border-color: rgba(139,92,246,0.4); color: #a78bfa;
+}
+.qbtn.history:hover { background: rgba(139,92,246,0.25); }
 </style>
 </head>
 <body>
@@ -1209,6 +1328,7 @@ body::before {
         <!-- BANDEJA -->
         <div class="tray-3d" id="tray-3d">
           <div class="tray-label-floating">Bandeja de recogida</div>
+          <div class="tray-counter" id="tray-counter"></div>
         </div>
 
         <!-- CABLE -->
@@ -1265,6 +1385,9 @@ body::before {
           <button class="qbtn" onclick="manualSelect()">Siguiente</button>
           <button class="qbtn primary" onclick="manualDispense()" id="btn-dispense">Dispensar</button>
           <button class="qbtn" onclick="resetAll()">Reiniciar</button>
+        </div>
+        <div class="history-btn-row">
+          <button class="qbtn history" onclick="openHistoryModal()">📋 Guardar y ver historial</button>
         </div>
       </div>
 
@@ -1330,6 +1453,46 @@ body::before {
 
 </div>
 
+<!-- ALARM OVERLAY -->
+<div class="alarm-overlay" id="alarm-overlay">
+  <div class="alarm-box">
+    <div class="alarm-icon">🚨</div>
+    <div class="alarm-title" id="alarm-title">¡MEDICAMENTO AGOTADO!</div>
+    <div class="alarm-text" id="alarm-text">El contenedor está vacío. Por favor recargue el medicamento lo antes posible.</div>
+    <button class="alarm-dismiss" onclick="dismissAlarm()">Entendido — Cerrar alarma</button>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>📋 Historial de dispensaciones</h2>
+      <button class="modal-close" onclick="closeHistoryModal()">Cerrar ✕</button>
+    </div>
+    <div class="history-table">
+      <table class="hist-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha y hora</th>
+            <th>Medicamento</th>
+            <th>Dosis</th>
+            <th>Tipo</th>
+            <th>Hora prog.</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+      <div class="hist-empty" id="hist-empty" style="display:none">Sin dispensaciones registradas aún.</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-export" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="modal-close" onclick="closeHistoryModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- NARRATIVE FLOATING -->
 <div class="scenario-narrative" id="narrative">
   <div class="narrative-icon" id="narrative-icon">💊</div>
@@ -1356,7 +1519,8 @@ let state = {
   dispensed: { 1: 0, 2: 0, 3: 0, 4: 0 },
   trayPills: [],
   running: false,
-  logs: []
+  logs: [],
+  history: []
 };
 
 // ============== RENDER FUNCTIONS ==============
@@ -1440,6 +1604,14 @@ function renderLCD() {
       <div class="lcd-row"><span class="lcd-lbl">Instr.:</span><span class="lcd-val">${m.method}</span></div>
       <div class="lcd-row"><span class="lcd-lbl">Próx.:</span><span class="lcd-val">${next.time}</span></div>
     `;
+  } else if (state.phase === 'empty') {
+    const m = MEDS.find(x => x.id === state.selected);
+    lcd.innerHTML = `
+      <div class="lcd-header error">✗ CONTENEDOR VACÍO</div>
+      <div class="lcd-row"><span class="lcd-lbl">Medic.:</span><span class="lcd-val">${m ? m.name : '---'}</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Estado:</span><span class="lcd-val">AGOTADO</span></div>
+      <div class="lcd-row"><span class="lcd-lbl">Acción:</span><span class="lcd-val">RECARGAR</span></div>
+    `;
   } else if (state.phase === 'lowstock') {
     lcd.innerHTML = `
       <div class="lcd-header error">⚠ STOCK BAJO</div>
@@ -1487,8 +1659,9 @@ function renderWheel() {
 function renderTray() {
   const tray = document.getElementById('tray-3d');
   const label = '<div class="tray-label-floating">Bandeja de recogida</div>';
-  tray.innerHTML = label + state.trayPills.map(p =>
-    `<div class="dispensed-pill" style="background:${p.color};border:1px solid ${p.borderColor}"></div>`
+  const counter = `<div class="tray-counter" id="tray-counter">${state.trayPills.length > 0 ? state.trayPills.length + ' past.' : ''}</div>`;
+  tray.innerHTML = label + counter + state.trayPills.map(p =>
+    `<div class="dispensed-pill-sm" style="background:${p.color};border:1px solid ${p.borderColor}"></div>`
   ).join('');
 }
 
@@ -1559,12 +1732,16 @@ function selectCanister(id) {
   const m = MEDS.find(x => x.id === id);
   const rem = m.initial - state.dispensed[id];
   if (rem <= 0) {
-    addLog(`Contenedor ${m.slot} vacío`, 'warning');
+    addLog(`Contenedor ${m.slot} vacío — recarga necesaria`, 'warning');
+    state.selected = id;
+    state.phase = 'empty';
+    document.getElementById('btn-dispense').disabled = true;
+    render();
     return;
   }
   state.selected = id;
   state.phase = 'selected';
-  addLog(`Seleccionado: ${m.name} ${m.dose}`, 'info');
+  addLog(`Seleccionado: ${m.name} ${m.dose} (${rem} disp.)`, 'info');
   document.getElementById('btn-dispense').disabled = false;
   render();
 }
@@ -1593,7 +1770,6 @@ function dispenseMed(id) {
     state.phase = 'dispensing';
     addLog(`Dispensando ${m.name}...`, 'info');
 
-    // Calcular ángulo de rotación (cada slot son 90°)
     const targetAngle = state.wheelAngle + 90 * m.id + 360;
     state.wheelAngle = targetAngle;
 
@@ -1602,28 +1778,55 @@ function dispenseMed(id) {
 
     setTimeout(() => {
       state.dispensed[id]++;
-      state.trayPills.push({ color: m.color, borderColor: m.borderColor });
-      if (state.trayPills.length > 8) state.trayPills.shift();
-      state.phase = 'done';
+      state.trayPills.push({ color: m.color, borderColor: m.borderColor, medId: id });
 
+      // Registrar en historial
+      const now = new Date();
+      state.history.push({
+        n: state.history.length + 1,
+        datetime: now.toLocaleString('es-CO'),
+        medName: m.name,
+        dose: m.dose,
+        slot: m.slot,
+        time: m.time,
+        color: m.color,
+        borderColor: m.borderColor
+      });
+
+      const newRem = m.initial - state.dispensed[id];
+      state.phase = 'done';
       document.getElementById('wheel-svg').classList.remove('spinning');
-      addLog(`✓ ${m.name} dispensado correctamente`, 'success');
-      render();
+      addLog(`✓ ${m.name} dispensado — ${newRem} restantes`, 'success');
+
+      if (newRem <= 0) {
+        // Medicamento agotado
+        addLog(`🚨 ${m.name} AGOTADO — recarga necesaria`, 'warning');
+        state.phase = 'empty';
+        render();
+        playAlarmSound();
+        showAlarmOverlay(m);
+        if (!state.running) {
+          document.getElementById('btn-dispense').disabled = true;
+        }
+      } else if (newRem <= 2) {
+        addLog(`⚠ ${m.name}: solo ${newRem} unidades`, 'warning');
+        state.phase = 'selected';
+        render();
+      } else {
+        state.phase = 'selected';
+        render();
+      }
 
       setTimeout(() => {
-        if (!state.running) {
-          state.phase = 'idle';
-          state.selected = null;
-          document.getElementById('btn-dispense').disabled = true;
-          render();
-        }
+        render();
         resolve();
-      }, 2000);
+      }, 1800);
     }, 1400);
   });
 }
 
 function resetAll() {
+  const prevHistory = state.history;
   state = {
     selected: null,
     phase: 'idle',
@@ -1631,9 +1834,10 @@ function resetAll() {
     dispensed: { 1: 0, 2: 0, 3: 0, 4: 0 },
     trayPills: [],
     running: false,
-    logs: []
+    logs: [],
+    history: prevHistory  // conservar historial entre reinicios
   };
-  addLog('Sistema reiniciado', 'info');
+  addLog('Sistema reiniciado — historial conservado', 'info');
   document.getElementById('btn-dispense').disabled = true;
   document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('running'));
   render();
@@ -1725,6 +1929,82 @@ async function runScenario(name) {
   state.running = false;
   document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('running'));
   render();
+}
+
+// ============== ALARMA ==============
+function playAlarmSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const beeps = [0, 200, 400, 600, 800];
+    beeps.forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'square';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay / 1000);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay / 1000 + 0.18);
+      osc.start(ctx.currentTime + delay / 1000);
+      osc.stop(ctx.currentTime + delay / 1000 + 0.18);
+    });
+  } catch(e) {}
+}
+
+function showAlarmOverlay(m) {
+  document.getElementById('alarm-title').textContent = `🚨 ¡${m.name} AGOTADO!`;
+  document.getElementById('alarm-text').textContent =
+    `El contenedor "${m.slot}" (${m.name} ${m.dose}) se ha agotado completamente.\nPor favor recargue el medicamento lo antes posible y avise al cuidador.`;
+  document.getElementById('alarm-overlay').classList.add('show');
+}
+
+function dismissAlarm() {
+  document.getElementById('alarm-overlay').classList.remove('show');
+}
+
+// ============== HISTORIAL ==============
+function openHistoryModal() {
+  saveHistoryToStorage();
+  const tbody = document.getElementById('history-tbody');
+  const empty = document.getElementById('hist-empty');
+  if (state.history.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = '';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = [...state.history].reverse().map(h => `
+      <tr>
+        <td>${h.n}</td>
+        <td>${h.datetime}</td>
+        <td><span class="pill-dot" style="background:${h.color};border:1px solid ${h.borderColor}"></span>${h.medName}</td>
+        <td>${h.dose}</td>
+        <td>${h.slot}</td>
+        <td>${h.time}</td>
+      </tr>`).join('');
+  }
+  document.getElementById('history-modal').classList.add('show');
+}
+
+function closeHistoryModal() {
+  document.getElementById('history-modal').classList.remove('show');
+}
+
+function saveHistoryToStorage() {
+  try {
+    localStorage.setItem('medDispenser_history', JSON.stringify(state.history));
+  } catch(e) {}
+}
+
+function exportCSV() {
+  if (state.history.length === 0) return;
+  const header = '#,Fecha y hora,Medicamento,Dosis,Tipo,Hora programada\n';
+  const rows = state.history.map(h =>
+    `${h.n},"${h.datetime}","${h.medName}","${h.dose}","${h.slot}","${h.time}"`
+  ).join('\n');
+  const blob = new Blob(['﻿' + header + rows], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `historial_medicamentos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 // ============== INICIALIZACIÓN ==============
